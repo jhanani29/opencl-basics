@@ -1,0 +1,40 @@
+/*
+void scan(float* output, float* input, int length)
+{
+	output[0] = 0;
+	for (int j = 1; j < length; ++j)
+	{
+		output[j] = input[j - 1] + output[j - 1];
+	}
+}
+*/
+//Excluso
+__kernel void scan(__global float *input, __global float *output, int n)
+{
+
+	int i = get_global_id(0);
+
+	int p2 = 0, p1 = 1;
+	__local float temp[32];
+	temp[p2*n + i] = input[i];
+
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	int offset;
+	for (offset = 1; offset < n; offset *= 2)
+	{
+		p2 = 1 - p2;
+		p1 = 1 - p1;
+		if (i >= offset)
+		{
+			temp[p2* n + i] = temp[p1*n+i] + temp[p1*n+i - offset];
+			
+		}
+		else
+			temp[n*p2 + i] = temp[p1*n+i];
+		barrier(CLK_LOCAL_MEM_FENCE);
+	}
+
+	output[i] = temp[n + i];
+    
+}
